@@ -1,0 +1,39 @@
+data_ingestion:
+  raw_path: data/raw/ai4i2020.csv   # where the original CSV lives
+  test_size: 0.2
+  random_state: 42
+
+model_building:
+  random_state: 42
+  isolation_forest:
+    n_estimators: 300
+  dbscan:
+    eps: 1.0
+    min_samples: 14
+  gmm:
+    n_components: 7
+    covariance_type: full
+    n_init: 5
+
+model_evaluation:
+  review_budgets: [0.01, 0.03, 0.05, 0.10]   # top fractions an analyst would review
+  n_bootstrap: 500                            # resamples for confidence intervals
+  random_state: 42
+
+multi_seed_eval:
+  n_seeds: 10
+  base_seed: 42
+
+app:
+  min_rows: 500            # DBSCAN/GMM settings were tuned on ~8,000 rows, so tiny files are refused
+  max_rows: 20000          # keeps the response time reasonable
+  max_missing_frac: 0.3    # a sensor column with more missing values than this is rejected
+  review_pct_default: 0.03 # share of rows flagged by default
+  review_pct_max: 0.2
+  shap_max_rows: 300       # SHAP is computed for the top rows only
+  top_features: 3          # features listed per flagged row
+
+registry:
+  model_name: anomaly-consensus
+  min_consensus_ap_mean: 0.30   # about 9x the random baseline (0.034); the current benchmark is 0.405
+  min_seeds_won: 9              # the consensus must beat each single method on at least 9 of 10 splits

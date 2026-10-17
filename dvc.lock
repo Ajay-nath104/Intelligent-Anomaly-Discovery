@@ -1,0 +1,270 @@
+schema: '2.0'
+stages:
+  data_ingestion:
+    cmd: python -m src.data.data_ingestion
+    deps:
+    - path: data/raw/ai4i2020.csv
+      hash: md5
+      md5: f0adaa9c5e25366c6df1cc2684479871
+      size: 522048
+    - path: src/constants.py
+      hash: md5
+      md5: bbbb9fbe1e9669e701e430fb0cb68c35
+      size: 1274
+    - path: src/data/data_ingestion.py
+      hash: md5
+      md5: db0f949f861391d66679afbf1eae4bd1
+      size: 3543
+    params:
+      params.yaml:
+        data_ingestion:
+          raw_path: data/raw/ai4i2020.csv
+          test_size: 0.2
+          random_state: 42
+    outs:
+    - path: data/interim
+      hash: md5
+      md5: 1dbb94702743d53b65ab60d349eeeb90.dir
+      size: 524067
+      nfiles: 2
+  data_preprocessing:
+    cmd: python -m src.features.data_preprocessing
+    deps:
+    - path: data/interim
+      hash: md5
+      md5: 1dbb94702743d53b65ab60d349eeeb90.dir
+      size: 524067
+      nfiles: 2
+    - path: src/constants.py
+      hash: md5
+      md5: bbbb9fbe1e9669e701e430fb0cb68c35
+      size: 1274
+    - path: src/features/data_preprocessing.py
+      hash: md5
+      md5: becb332cf6f50071fb14654ca0840726
+      size: 4627
+    outs:
+    - path: data/processed
+      hash: md5
+      md5: 2cf30bd9daec0c05f830e4dfad573e2f.dir
+      size: 1511348
+      nfiles: 4
+    - path: models/preprocessor.joblib
+      hash: md5
+      md5: de8e62d8bb4e52bcececfdfbed1161b3
+      size: 3141
+  model_building:
+    cmd: python -m src.model.model_building
+    deps:
+    - path: data/processed/X_train.csv
+      hash: md5
+      md5: d329b042e35a0aa0dd3568e3bb7ab932
+      size: 1104902
+    - path: src/model/model_building.py
+      hash: md5
+      md5: 80977df62a72bb612a446745e3a3a15a
+      size: 4033
+    - path: src/model/scorers.py
+      hash: md5
+      md5: 08098548e4c234860da4ccfc5552787b
+      size: 1999
+    params:
+      params.yaml:
+        model_building:
+          random_state: 42
+          isolation_forest:
+            n_estimators: 300
+          dbscan:
+            eps: 1.0
+            min_samples: 14
+          gmm:
+            n_components: 7
+            covariance_type: full
+            n_init: 5
+    outs:
+    - path: models/dbscan.joblib
+      hash: md5
+      md5: 2717266950dbbe9de5ca515d21bca2d1
+      size: 914949
+    - path: models/gmm.joblib
+      hash: md5
+      md5: ac5650ab98b2f7e6fe92e24e3246e119
+      size: 11038
+    - path: models/iforest.joblib
+      hash: md5
+      md5: 033a0352894efa55cb22e9f7ba043b1a
+      size: 4043613
+  model_evaluation:
+    cmd: python -m src.model.model_evaluation
+    deps:
+    - path: data/processed/X_test.csv
+      hash: md5
+      md5: 1fc35a3669d50b7a200029680523b0cc
+      size: 276372
+    - path: data/processed/y_test.csv
+      hash: md5
+      md5: 6b3023159ba42f264ffe0b62f131c229
+      size: 26037
+    - path: models/dbscan.joblib
+      hash: md5
+      md5: 2717266950dbbe9de5ca515d21bca2d1
+      size: 914949
+    - path: models/gmm.joblib
+      hash: md5
+      md5: ac5650ab98b2f7e6fe92e24e3246e119
+      size: 11038
+    - path: models/iforest.joblib
+      hash: md5
+      md5: 033a0352894efa55cb22e9f7ba043b1a
+      size: 4043613
+    - path: models/preprocessor.joblib
+      hash: md5
+      md5: de8e62d8bb4e52bcececfdfbed1161b3
+      size: 3141
+    - path: src/constants.py
+      hash: md5
+      md5: bbbb9fbe1e9669e701e430fb0cb68c35
+      size: 1274
+    - path: src/features/data_preprocessing.py
+      hash: md5
+      md5: becb332cf6f50071fb14654ca0840726
+      size: 4627
+    - path: src/model/anomaly_model.py
+      hash: md5
+      md5: 461541bd2391fdd0ca57a4e5d11abc8f
+      size: 2841
+    - path: src/model/metrics.py
+      hash: md5
+      md5: f9ebaa8ff2298e8e23f492c169a34e70
+      size: 4678
+    - path: src/model/model_building.py
+      hash: md5
+      md5: 80977df62a72bb612a446745e3a3a15a
+      size: 4033
+    - path: src/model/model_evaluation.py
+      hash: md5
+      md5: c30c2dd6a94d80d91a8987b239ee7160
+      size: 7188
+    - path: src/model/scorers.py
+      hash: md5
+      md5: 08098548e4c234860da4ccfc5552787b
+      size: 1999
+    - path: src/pipeline/predict_pipeline.py
+      hash: md5
+      md5: 6d770b93c359b5b7541c717eab36854e
+      size: 11331
+    params:
+      params.yaml:
+        app:
+          min_rows: 500
+          max_rows: 20000
+          max_missing_frac: 0.3
+          review_pct_default: 0.03
+          review_pct_max: 0.2
+          shap_max_rows: 300
+          top_features: 3
+        data_ingestion:
+          raw_path: data/raw/ai4i2020.csv
+          test_size: 0.2
+          random_state: 42
+        model_building:
+          random_state: 42
+          isolation_forest:
+            n_estimators: 300
+          dbscan:
+            eps: 1.0
+            min_samples: 14
+          gmm:
+            n_components: 7
+            covariance_type: full
+            n_init: 5
+        model_evaluation:
+          review_budgets:
+          - 0.01
+          - 0.03
+          - 0.05
+          - 0.1
+          n_bootstrap: 500
+          random_state: 42
+    outs:
+    - path: reports/experiment_info.json
+      hash: md5
+      md5: 3a10989ab0d6fb66cd0a43753f0d4fb2
+      size: 118
+    - path: reports/metrics.json
+      hash: md5
+      md5: 8386326541d0a21b69c624bb2746c7a9
+      size: 3813
+    - path: reports/pr_curve.png
+      hash: md5
+      md5: 570d33b54965d707900ffd140da52978
+      size: 72060
+  multi_seed_eval:
+    cmd: python -m src.model.multi_seed_eval
+    deps:
+    - path: data/raw/ai4i2020.csv
+      hash: md5
+      md5: f0adaa9c5e25366c6df1cc2684479871
+      size: 522048
+    - path: src/constants.py
+      hash: md5
+      md5: bbbb9fbe1e9669e701e430fb0cb68c35
+      size: 1274
+    - path: src/features/data_preprocessing.py
+      hash: md5
+      md5: becb332cf6f50071fb14654ca0840726
+      size: 4627
+    - path: src/model/metrics.py
+      hash: md5
+      md5: f9ebaa8ff2298e8e23f492c169a34e70
+      size: 4678
+    - path: src/model/model_building.py
+      hash: md5
+      md5: 80977df62a72bb612a446745e3a3a15a
+      size: 4033
+    - path: src/model/multi_seed_eval.py
+      hash: md5
+      md5: 26f553683c47b81792bd1695307fc84e
+      size: 7335
+    - path: src/model/scorers.py
+      hash: md5
+      md5: 08098548e4c234860da4ccfc5552787b
+      size: 1999
+    - path: src/pipeline/predict_pipeline.py
+      hash: md5
+      md5: 6d770b93c359b5b7541c717eab36854e
+      size: 11331
+    params:
+      params.yaml:
+        data_ingestion:
+          raw_path: data/raw/ai4i2020.csv
+          test_size: 0.2
+          random_state: 42
+        model_building:
+          random_state: 42
+          isolation_forest:
+            n_estimators: 300
+          dbscan:
+            eps: 1.0
+            min_samples: 14
+          gmm:
+            n_components: 7
+            covariance_type: full
+            n_init: 5
+        model_evaluation.review_budgets:
+        - 0.01
+        - 0.03
+        - 0.05
+        - 0.1
+        multi_seed_eval:
+          n_seeds: 10
+          base_seed: 42
+    outs:
+    - path: reports/multi_seed_metrics.json
+      hash: md5
+      md5: 3a57f4d03d441c00f72512a20e22c290
+      size: 10253
+    - path: reports/multi_seed_per_seed.csv
+      hash: md5
+      md5: c53637c306bc9adf53c6b11b7e20588f
+      size: 12430
